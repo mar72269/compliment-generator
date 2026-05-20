@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Compliment Generator | Systems Architecture Demo</title>
+    <title>AI Compliment & Joke Engine | Systems Architecture Demo</title>
     
     <!-- External Fonts: Inter (Standard) & JetBrains Mono (Technical) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,22 +14,15 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <style>
-        /* * Architectural Note: CSS Custom Properties act as our Design Tokens. 
-         * This ensures a single source of truth for the "Technical Minimalist" theme.
-         * Deep Slate (#0F172A), Lighter Slate (#1E293B), Electric Teal (#14B8A6).
-         */
         :root {
-            --bg-deep-slate: #0F172A;
             --surface-slate: #1E293B;
             --accent-teal: #14B8A6;
             --text-primary: #F8FAFC;
             --text-secondary: #94A3B8;
-            
             --font-standard: 'Inter', sans-serif;
             --font-technical: 'JetBrains Mono', monospace;
-            
-            --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            --border-radius: 8px;
+            --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            --border-radius: 12px;
         }
 
         * {
@@ -39,61 +32,87 @@
         }
 
         body {
-            background-color: var(--bg-deep-slate);
+            /* Animated Gradient Background for Visual Interest */
+            background: linear-gradient(-45deg, #0F172A, #1E1B4B, #064E3B, #0F172A);
+            background-size: 400% 400%;
+            animation: gradientBG 20s ease infinite;
             color: var(--text-primary);
             font-family: var(--font-standard);
             line-height: 1.6;
             min-height: 100vh;
             display: flex;
-            flex-direction: column;
+            align-items: center;
+            justify-content: center;
             overflow-x: hidden;
             -webkit-font-smoothing: antialiased;
+            position: relative;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Subtle Grid Overlay */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 30px 30px;
+            pointer-events: none;
+            z-index: 0;
         }
 
         .app-container {
-            max-width: 1200px;
+            max-width: 1000px;
+            width: 100%;
             margin: 0 auto;
-            padding: 3rem 2rem;
-            flex-grow: 1;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 3rem;
-            align-items: stretch; /* Match heights of both columns */
+            padding: 2rem;
+            display: flex;
+            gap: 4rem;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
         }
 
         @media (max-width: 860px) {
             .app-container {
-                grid-template-columns: 1fr;
+                flex-direction: column;
                 gap: 2rem;
+                padding: 1rem;
             }
         }
 
         .control-panel {
-            background-color: var(--surface-slate);
+            background-color: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(12px);
             padding: 2.5rem;
             border-radius: var(--border-radius);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-            display: flex;
-            flex-direction: column;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            flex: 1;
+            max-width: 450px;
         }
 
         .header-section {
             margin-bottom: 2rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             padding-bottom: 1.5rem;
         }
 
         .header-section h1 {
-            font-size: 1.75rem;
+            font-size: 1.5rem;
             margin-bottom: 0.5rem;
             font-weight: 600;
-            letter-spacing: -0.02em;
         }
         
         .header-section p {
             color: var(--text-secondary);
-            font-size: 0.95rem;
+            font-size: 0.9rem;
         }
 
         .form-group {
@@ -113,14 +132,13 @@
         .form-control {
             width: 100%;
             padding: 0.85rem 1rem;
-            background-color: var(--bg-deep-slate);
+            background-color: rgba(15, 23, 42, 0.6);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 6px;
             color: var(--text-primary);
             font-family: var(--font-standard);
             font-size: 1rem;
             transition: var(--transition-smooth);
-            appearance: none;
         }
 
         .form-control:focus {
@@ -129,222 +147,197 @@
             box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.15);
         }
 
-        .btn-submit {
-            width: 100%;
-            padding: 1rem;
-            margin-top: auto; /* Push to bottom of form */
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn-action {
+            flex: 1;
+            padding: 1rem 0.5rem;
             background-color: transparent;
-            color: var(--accent-teal);
-            border: 1px solid var(--accent-teal);
+            color: var(--text-primary);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 6px;
             font-family: var(--font-technical);
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             font-weight: 700;
             cursor: pointer;
             transition: var(--transition-smooth);
             text-transform: uppercase;
             letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 10px;
-            position: relative;
-            overflow: hidden;
         }
 
-        .btn-submit:hover:not(:disabled) {
+        .btn-primary {
+            border-color: var(--accent-teal);
+            color: var(--accent-teal);
+        }
+
+        .btn-secondary {
+            border-color: #8B5CF6;
+            color: #8B5CF6;
+        }
+
+        .btn-action:hover:not(:disabled) {
+            transform: translateY(-2px);
+        }
+
+        .btn-primary:hover:not(:disabled) {
             background-color: rgba(20, 184, 166, 0.1);
-            box-shadow: 0 0 20px rgba(20, 184, 166, 0.2);
+            box-shadow: 0 5px 15px rgba(20, 184, 166, 0.2);
         }
 
-        .btn-submit:disabled {
+        .btn-secondary:hover:not(:disabled) {
+            background-color: rgba(139, 92, 246, 0.1);
+            box-shadow: 0 5px 15px rgba(139, 92, 246, 0.2);
+        }
+
+        .btn-action:disabled {
             opacity: 0.5;
             cursor: not-allowed;
-            border-color: var(--text-secondary);
-            color: var(--text-secondary);
+            transform: none;
         }
 
-        .visualization-panel {
+        .playing-card-wrapper {
+            perspective: 1000px;
+        }
+
+        .playing-card {
+            /* Exact Playing Card Ratio 2.5 : 3.5 */
+            width: 360px;
+            height: 504px;
+            background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px; /* Standard card rounded corners */
+            box-shadow: 
+                0 20px 40px rgba(0,0,0,0.6),
+                inset 0 0 0 6px rgba(255, 255, 255, 0.03); /* Inner border */
+            position: relative;
+            padding: 20px;
             display: flex;
             flex-direction: column;
-            gap: 1.5rem;
-            height: 100%;
+            transition: transform 0.5s ease, box-shadow 0.5s ease;
         }
 
-        #three-canvas-container {
-            width: 100%;
-            flex-grow: 1; /* Take up available space */
-            min-height: 300px;
-            background-color: var(--surface-slate);
-            border-radius: var(--border-radius);
-            overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            position: relative;
-            box-shadow: inset 0 0 50px rgba(0,0,0,0.5);
+        .playing-card:hover {
+            transform: translateY(-10px) rotateX(5deg) rotateY(-2deg);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.8), inset 0 0 0 6px rgba(255, 255, 255, 0.05);
         }
 
-        .arch-badge {
+        /* Dynamic Circles */
+        .card-circle {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
             position: absolute;
-            top: 15px;
-            left: 15px;
-            font-family: var(--font-technical);
-            font-size: 0.7rem;
-            color: var(--accent-teal);
-            background: rgba(20, 184, 166, 0.1);
-            padding: 4px 8px;
-            border-radius: 4px;
-            border: 1px solid rgba(20, 184, 166, 0.2);
-            pointer-events: none;
-            z-index: 10;
-            transition: var(--transition-smooth);
-        }
-
-        .result-container {
-            background-color: rgba(15, 23, 42, 0.9);
-            border: 1px solid rgba(20, 184, 166, 0.3);
-            border-top: 4px solid var(--accent-teal);
-            border-radius: var(--border-radius);
-            display: flex;
-            flex-direction: column;
-            font-family: var(--font-technical);
-            font-size: 0.95rem;
-            line-height: 1.8;
-            position: relative;
-            
-            /* Enforce strict vertical height so it NEVER changes size */
-            height: 450px; 
-            min-height: 450px;
-            max-height: 450px;
-            flex: 0 0 450px;
-            
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 0 30px rgba(20, 184, 166, 0.05);
-            transition: var(--transition-smooth);
-            overflow: hidden;
-        }
-
-        .result-container::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: radial-gradient(circle at center, rgba(20, 184, 166, 0.08) 0%, transparent 70%);
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        .terminal-header {
             display: flex;
             align-items: center;
-            padding: 10px 15px;
-            background: rgba(255, 255, 255, 0.03);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            z-index: 1;
+            justify-content: center;
+            font-size: 16px;
+            border: 2px solid #1E293B;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+            z-index: 10;
+            transition: var(--transition-smooth);
+            background-color: var(--accent-teal); /* Default */
         }
 
-        .terminal-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            margin-right: 8px;
-        }
-        .dot-red { background-color: #EF4444; }
-        .dot-yellow { background-color: #F59E0B; }
-        .dot-green { background-color: #10B981; }
+        .circle-tr { top: 12px; right: 12px; }
+        .circle-bl { bottom: 12px; left: 12px; }
 
-        .terminal-title {
-            margin-left: auto;
-            margin-right: auto;
-            color: var(--text-secondary);
-            font-size: 0.75rem;
-            letter-spacing: 1px;
-            opacity: 0.7;
+        /* Card Art (Three.js Container) */
+        #three-canvas-container {
+            width: 100%;
+            height: 220px;
+            background-color: #0F172A;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            margin-top: 15px; /* Clear the top circle */
+            position: relative;
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.6);
+            flex-shrink: 0;
         }
 
-        .result-scroll-area {
+        /* Card Text Area */
+        .card-text-area {
+            margin-top: 20px;
+            padding: 15px;
             flex-grow: 1;
-            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            font-family: var(--font-technical);
+            font-size: 0.95rem;
+            line-height: 1.6;
             overflow-y: auto;
-            z-index: 1;
             display: flex;
             flex-direction: column;
+            justify-content: center;
+            text-align: center;
         }
 
-        /* Subtle pulse animation on success */
-        .result-container.success-pulse {
-            animation: pulse-teal 2s infinite;
-        }
+        /* Custom Scrollbar for Card */
+        .card-text-area::-webkit-scrollbar { width: 6px; }
+        .card-text-area::-webkit-scrollbar-track { background: transparent; }
+        .card-text-area::-webkit-scrollbar-thumb { background-color: rgba(255,255,255,0.2); border-radius: 3px; }
 
-        @keyframes pulse-teal {
-            0% { box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 0 20px rgba(20, 184, 166, 0.05); border-color: rgba(20, 184, 166, 0.3); border-top-color: var(--accent-teal); }
-            50% { box-shadow: 0 10px 40px rgba(20, 184, 166, 0.15), inset 0 0 40px rgba(20, 184, 166, 0.15); border-color: rgba(20, 184, 166, 0.6); border-top-color: #5eead4; }
-            100% { box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 0 20px rgba(20, 184, 166, 0.05); border-color: rgba(20, 184, 166, 0.3); border-top-color: var(--accent-teal); }
-        }
-
-        /* Custom Scrollbar */
-        .result-scroll-area::-webkit-scrollbar {
-            width: 8px;
-        }
-        .result-scroll-area::-webkit-scrollbar-track {
-            background: rgba(15, 23, 42, 0.5);
-        }
-        .result-scroll-area::-webkit-scrollbar-thumb {
-            background-color: rgba(20, 184, 166, 0.3);
-            border-radius: 4px;
-        }
-
-        #compliment-text {
-            color: var(--text-primary);
-            white-space: pre-wrap;
-            text-shadow: 0 0 8px rgba(20, 184, 166, 0.2);
-        }
-        
         .placeholder-text {
-            color: var(--text-secondary) !important;
+            color: var(--text-secondary);
             font-style: italic;
-            opacity: 0.7;
+            opacity: 0.5;
+            font-size: 0.85rem;
         }
 
-        .cursor-blink::after {
-            content: ' █';
+        .punchline-text {
+            margin-top: 15px;
             color: var(--accent-teal);
-            animation: blink 1s step-end infinite;
-        }
-        
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0; }
+            font-weight: bold;
+            font-size: 1.1rem;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.5s ease;
         }
 
-        /* Loading Spinner */
+        .punchline-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Loading Spinners */
         .loader {
             display: none;
-            width: 18px;
-            height: 18px;
+            width: 16px;
+            height: 16px;
             border: 2px solid rgba(255,255,255,0.1);
-            border-top: 2px solid var(--accent-teal);
+            border-top: 2px solid currentColor;
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
     <div class="app-container">
-        <!-- LEFT COLUMN: User Input Control Panel -->
+        
+        <!-- LEFT: Control Panel -->
         <div class="control-panel">
             <div class="header-section">
-                <h1>AI Compliment Engine</h1>
-                <p>Event-Driven Architecture & Webhook Dispatch Demo</p>
+                <h1>AI Output Engine</h1>
+                <p>Event-Driven Architecture & Webhook Dispatch</p>
             </div>
 
-            <form id="compliment-form">
+            <form id="engine-form">
                 <div class="form-group">
                     <label for="tone">LLM System Tone</label>
-                    <select id="tone" class="form-control" required>
+                    <select id="tone" class="form-control">
                         <option value="analytical">Analytical & Professional</option>
                         <option value="visionary">Visionary & Forward-Thinking</option>
                         <option value="enthusiastic">Energetic & Casual</option>
@@ -353,224 +346,163 @@
 
                 <div class="form-group">
                     <label for="topic">Focal Topic</label>
-                    <input type="text" id="topic" class="form-control" placeholder="e.g., CI/CD Pipelines, Supply Chain Analytics" required>
+                    <input type="text" id="topic" class="form-control" placeholder="e.g., CI/CD Pipelines, Algorithms" required>
                 </div>
 
-                <div class="form-group">
-                    <label for="focus_area">Specific Focus Area (Optional)</label>
-                    <input type="text" id="focus_area" class="form-control" placeholder="e.g., Code Efficiency, Process Optimization">
+                <div class="button-group">
+                    <button type="submit" id="btn-compliment" class="btn-action btn-primary" data-type="compliment">
+                        <span>Compliment</span>
+                        <div class="loader"></div>
+                    </button>
+                    <button type="button" id="btn-joke" class="btn-action btn-secondary" data-type="joke">
+                        <span>Joke</span>
+                        <div class="loader"></div>
+                    </button>
                 </div>
-
-                <button type="submit" id="submit-btn" class="btn-submit">
-                    <span>Generate Artifact</span>
-                    <div class="loader" id="loader"></div>
-                </button>
             </form>
         </div>
 
-        <!-- RIGHT COLUMN: 3D Visualization and System Output -->
-        <div class="visualization-panel">
-            <!-- 3D Spatial Renderer -->
-            <div id="three-canvas-container">
-                <div class="arch-badge" id="state-badge">SYS: IDLE</div>
-            </div>
-            
-            <!-- Processed Data Output -->
-            <div class="result-container">
-                <div class="terminal-header">
-                    <div class="terminal-dot dot-red"></div>
-                    <div class="terminal-dot dot-yellow"></div>
-                    <div class="terminal-dot dot-green"></div>
-                    <div class="terminal-title">~/ai/payload-viewer.sh</div>
-                </div>
-                <div class="result-scroll-area">
-                    <div id="compliment-text" class="placeholder-text cursor-blink">
-> Initialize connection to establish data flow...
-> Awaiting system parameters.
+        <!-- RIGHT: Playing Card Output -->
+        <div class="playing-card-wrapper">
+            <div class="playing-card" id="output-card">
+                <!-- Dynamic Corner Circles -->
+                <div class="card-circle circle-tr" id="circle-tr">🔮</div>
+                <div class="card-circle circle-bl" id="circle-bl">🔮</div>
+                
+                <!-- 3D Card Art -->
+                <div id="three-canvas-container"></div>
+                
+                <!-- Card Effect / Text -->
+                <div class="card-text-area" id="card-text-area">
+                    <div id="text-content" class="placeholder-text">
+                        Awaiting system parameters to synthesize output...
                     </div>
                 </div>
             </div>
         </div>
+
     </div>
 
     <script>
         /**
          * MODULE: Visualizer3D
-         * Architectural Note: Isolated namespace using IIFE. This prevents global scope 
-         * pollution. The module exposes a strict API (init, process, reveal) that the 
-         * main application controller can call based on network states.
+         * Architectural Note: Isolated namespace to handle the 3D "Card Art".
+         * Rendered strictly within the bounds of the 220px high card container.
          */
         const Visualizer3D = (function() {
             let scene, camera, renderer, boxGroup, innerCore;
             let faces = [];
-            let particleSystem;
-            
-            // Animation state machine
-            let state = 'IDLE'; // IDLE, PROCESSING, REVEALING
+            let state = 'IDLE'; 
             let baseRotation = 0.005;
 
             function init() {
                 const container = document.getElementById('three-canvas-container');
                 
-                // 1. Scene Setup
                 scene = new THREE.Scene();
-                // Fog adds depth and blends into the background color
-                scene.fog = new THREE.FogExp2(0x1E293B, 0.15); 
+                scene.fog = new THREE.FogExp2(0x0F172A, 0.2); 
                 
-                // 2. Camera Setup
-                camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
-                camera.position.set(3, 3, 5);
+                // Adjusted Camera for the smaller container
+                camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 1000);
+                camera.position.set(2.5, 2.5, 3.5);
                 camera.lookAt(0, 0, 0);
 
-                // 3. Renderer Setup
                 renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
                 renderer.setSize(container.clientWidth, container.clientHeight);
-                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Cap pixel ratio for performance
+                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
                 container.appendChild(renderer.domElement);
 
-                // 3.5 Particle System (Visual Interest)
-                const particleCount = 200;
-                const particleGeometry = new THREE.BufferGeometry();
-                const particlePositions = new Float32Array(particleCount * 3);
-                
-                for(let i = 0; i < particleCount * 3; i++) {
-                    particlePositions[i] = (Math.random() - 0.5) * 10;
-                }
-                
-                particleGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
-                const particleMaterial = new THREE.PointsMaterial({
-                    color: 0x14B8A6,
-                    size: 0.05,
-                    transparent: true,
-                    opacity: 0.4,
-                    blending: THREE.AdditiveBlending
-                });
-                
-                particleSystem = new THREE.Points(particleGeometry, particleMaterial);
-                scene.add(particleSystem);
-
-                // 4. Constructing the Data Box (The Envelope)
                 boxGroup = new THREE.Group();
                 scene.add(boxGroup);
 
-                // Material for the outer box faces
                 const faceMaterial = new THREE.MeshPhongMaterial({
-                    color: 0x0F172A,
+                    color: 0x1E293B,
                     emissive: 0x14B8A6,
-                    emissiveIntensity: 0.15,
+                    emissiveIntensity: 0.1,
                     transparent: true,
                     opacity: 0.9,
-                    side: THREE.DoubleSide,
-                    wireframe: false
+                    side: THREE.DoubleSide
                 });
                 
                 const wireframeMaterial = new THREE.MeshBasicMaterial({
                     color: 0x14B8A6,
                     wireframe: true,
                     transparent: true,
-                    opacity: 0.3
+                    opacity: 0.4
                 });
 
-                // Create 6 separate planes to form a box so they can animate independently
-                const planeGeom = new THREE.PlaneGeometry(1.5, 1.5);
+                // Smaller geometric planes to fit the card art window
+                const planeGeom = new THREE.PlaneGeometry(1.2, 1.2);
                 const positions = [
-                    { pos: [0, 0, 0.75], rot: [0, 0, 0] },         // Front
-                    { pos: [0, 0, -0.75], rot: [0, Math.PI, 0] },  // Back
-                    { pos: [0, 0.75, 0], rot: [-Math.PI/2, 0, 0] },// Top
-                    { pos: [0, -0.75, 0], rot: [Math.PI/2, 0, 0] },// Bottom
-                    { pos: [0.75, 0, 0], rot: [0, Math.PI/2, 0] }, // Right
-                    { pos: [-0.75, 0, 0], rot: [0, -Math.PI/2, 0] } // Left
+                    { pos: [0, 0, 0.6], rot: [0, 0, 0] },         
+                    { pos: [0, 0, -0.6], rot: [0, Math.PI, 0] },  
+                    { pos: [0, 0.6, 0], rot: [-Math.PI/2, 0, 0] },
+                    { pos: [0, -0.6, 0], rot: [Math.PI/2, 0, 0] },
+                    { pos: [0.6, 0, 0], rot: [0, Math.PI/2, 0] }, 
+                    { pos: [-0.6, 0, 0], rot: [0, -Math.PI/2, 0] } 
                 ];
 
                 positions.forEach(p => {
                     const group = new THREE.Group();
-                    
                     const mesh = new THREE.Mesh(planeGeom, faceMaterial.clone());
                     const wire = new THREE.Mesh(planeGeom, wireframeMaterial.clone());
                     
                     group.add(mesh);
                     group.add(wire);
-                    
                     group.position.set(...p.pos);
                     group.rotation.set(...p.rot);
                     
-                    // Store base positions for animation
                     group.userData.basePos = new THREE.Vector3(...p.pos);
-                    group.userData.targetPos = new THREE.Vector3(...p.pos).multiplyScalar(2.5); // Explode outwards
+                    group.userData.targetPos = new THREE.Vector3(...p.pos).multiplyScalar(2.0); 
                     
                     faces.push(group);
                     boxGroup.add(group);
                 });
 
-                // 5. Constructing the Inner Data Core (The Payload)
-                // Using TorusKnot instead of Icosahedron for a more complex, technical look
-                const coreGeom = new THREE.TorusKnotGeometry(0.35, 0.08, 100, 16);
+                // The glowing inner payload
+                const coreGeom = new THREE.TorusKnotGeometry(0.3, 0.08, 100, 16);
                 const coreMat = new THREE.MeshStandardMaterial({
-                    color: 0x14B8A6,
-                    emissive: 0x14B8A6,
+                    color: 0xffffff,
+                    emissive: 0xffffff,
                     emissiveIntensity: 0.8,
                     wireframe: true
                 });
                 innerCore = new THREE.Mesh(coreGeom, coreMat);
-                innerCore.scale.set(0, 0, 0); // Hidden initially
+                innerCore.scale.set(0, 0, 0); 
                 scene.add(innerCore);
 
-                // 6. Lighting
-                const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
                 scene.add(ambientLight);
-                const pointLight = new THREE.PointLight(0x14B8A6, 2, 10);
-                pointLight.position.set(0, 0, 0); // Light emanates from center
+                const pointLight = new THREE.PointLight(0xffffff, 2, 10);
+                pointLight.position.set(0, 0, 0); 
                 scene.add(pointLight);
 
-                // Event Listeners & Boot Loop
-                window.addEventListener('resize', onWindowResize, false);
                 animate();
-            }
-
-            function onWindowResize() {
-                const container = document.getElementById('three-canvas-container');
-                camera.aspect = container.clientWidth / container.clientHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(container.clientWidth, container.clientHeight);
             }
 
             function animate() {
                 requestAnimationFrame(animate);
 
-                // Constant rotation
                 boxGroup.rotation.y += baseRotation;
                 boxGroup.rotation.x += baseRotation * 0.5;
                 innerCore.rotation.y -= 0.02;
                 innerCore.rotation.z -= 0.01;
-                
-                if (particleSystem) {
-                    particleSystem.rotation.y += 0.001;
-                    particleSystem.rotation.x += 0.0005;
-                }
 
-                // State Machine Animation Logic
                 if (state === 'PROCESSING') {
-                    // Accelerate rotation to indicate network request inflight
-                    baseRotation = THREE.MathUtils.lerp(baseRotation, 0.04, 0.05);
+                    baseRotation = THREE.MathUtils.lerp(baseRotation, 0.05, 0.05);
                 } 
                 else if (state === 'REVEALING') {
-                    // Slow down rotation
                     baseRotation = THREE.MathUtils.lerp(baseRotation, 0.002, 0.05);
                     
-                    // Explode box faces outward and fade them out
                     faces.forEach(face => {
                         face.position.lerp(face.userData.targetPos, 0.05);
-                        // Access the solid mesh and wireframe mesh to reduce opacity
                         face.children[0].material.opacity = THREE.MathUtils.lerp(face.children[0].material.opacity, 0, 0.05);
                         face.children[1].material.opacity = THREE.MathUtils.lerp(face.children[1].material.opacity, 0, 0.05);
                     });
 
-                    // Reveal the inner core (payload)
                     innerCore.scale.lerp(new THREE.Vector3(1, 1, 1), 0.08);
                     
-                    // Reset to idle after a few seconds
                     if (innerCore.scale.x > 0.95) {
-                        setTimeout(() => { if (state === 'REVEALING') resetAnimation(); }, 4000);
+                        setTimeout(() => { if (state === 'REVEALING') resetAnimation(); }, 5000);
                     }
                 }
 
@@ -581,268 +513,310 @@
                 state = 'IDLE';
                 baseRotation = 0.005;
                 
-                // Animate everything back to starting positions
                 const resetInterval = setInterval(() => {
                     let done = true;
-                    
                     faces.forEach(face => {
                         face.position.lerp(face.userData.basePos, 0.1);
                         face.children[0].material.opacity = THREE.MathUtils.lerp(face.children[0].material.opacity, 0.9, 0.1);
-                        face.children[1].material.opacity = THREE.MathUtils.lerp(face.children[1].material.opacity, 0.3, 0.1);
-                        
+                        face.children[1].material.opacity = THREE.MathUtils.lerp(face.children[1].material.opacity, 0.4, 0.1);
                         if (face.position.distanceTo(face.userData.basePos) > 0.01) done = false;
                     });
-
                     innerCore.scale.lerp(new THREE.Vector3(0, 0, 0), 0.1);
-
                     if (done) clearInterval(resetInterval);
                 }, 16);
             }
 
-            // Expose public API
             return {
-                init: init,
+                init,
                 setProcessing: () => { state = 'PROCESSING'; },
-                setRevealing: () => { state = 'REVEALING'; }
+                setRevealing: (colorHex) => { 
+                    state = 'REVEALING'; 
+                    if(colorHex) innerCore.material.emissive.setHex(parseInt(colorHex.replace('#', '0x')));
+                }
             };
         })();
 
-        // Initialize rendering pipeline on load
         window.addEventListener('load', Visualizer3D.init);
     </script>
 
     <script>
-        /**
-         * MODULE: AppController
-         * Architectural Note: Handles DOM events, state management, and HTTP network requests 
-         * to the Python backend. Separated from visualization logic for maintainability.
-         */
         document.addEventListener('DOMContentLoaded', () => {
-            const form = document.getElementById('compliment-form');
-            const submitBtn = document.getElementById('submit-btn');
-            const btnText = submitBtn.querySelector('span');
-            const loader = document.getElementById('loader');
-            const resultContainer = document.querySelector('.result-container'); // Get container
-            const resultText = document.getElementById('compliment-text');
-            const stateBadge = document.getElementById('state-badge');
+            const form = document.getElementById('engine-form');
+            const btnCompliment = document.getElementById('btn-compliment');
+            const btnJoke = document.getElementById('btn-joke');
+            const textContent = document.getElementById('text-content');
+            const circleTR = document.getElementById('circle-tr');
+            const circleBL = document.getElementById('circle-bl');
 
-            // Environment Config
-            const API_URL = 'http://localhost:8000/api/compliment';
+            // Visual Asset Libraries for Card Decoration
+            const cardColors = ['#EF4444', '#F59E0B', '#10B981', '#3B82F6', '#8B5CF6', '#EC4899', '#14B8A6'];
+            const cardIcons = ['✨','🚀','🔥','⚡','🧠','💻','🎨','🧩','🎲','💎','🌟','🛡️','🔮','🧬','🌌','🪐','🛸','⚙️','💡','🔑','🏆','🎯','🎭','🎬','🎧'];
 
-            // 100 Unique, Funny, and Tech-Themed Compliments
-            const mockCompliments = [
-                "Your system architecture is so clean, it belongs in a digital museum. 🏛️✨",
-                "You're the 'sudo' to my 'command not found'. You make things happen! 🔑",
-                "Your code is so efficient, it makes O(n) look slow. 🚀",
-                "Working with you is like having a dedicated, low-latency fiber optic line to success. 🤝⚡",
-                "You solve problems faster than a quantum computer running Grover's algorithm. 🧠⚛️",
-                "Your ability to refactor legacy code is nothing short of digital alchemy. 🧙‍♂️💻",
-                "You've got more valuable insights than a well-trained neural network. 🤖💡",
-                "Your debugging skills are legendary; bugs check themselves out when they see you coming. 🐛💨",
-                "Your understanding of distributed systems is so vast, you probably dream in CAP theorem. ☁️🤯",
-                "You are the human equivalent of a perfectly optimized database index. Everything is faster with you. 🗂️⚡",
-                "Your commit messages are poetry in motion. Clear, concise, and beautiful. 📝✨",
-                "You handle production incidents with the calm demeanor of a Zen master rebooting a server. 🧘‍♂️🔥",
-                "Your code review feedback is like a software update for my brain. 🧠⬆️",
-                "You're not just a developer; you're a digital architect building the future one line at a time. 🏗️🌆",
-                "Your API designs are so intuitive, they're practically telepathic. 🔮🔗",
-                "You're the missing dependency that makes our team compilation successful. 📦✅",
-                "Your documentation is so good, it should be a bestseller. 📚⭐",
-                "You have a knack for simplifying complex concepts that is truly unparalleled. 🧩➡️🟩",
-                "Your enthusiasm for new technology is infectious—in a good way! 🦠😄",
-                "You're the load balancer of our team, keeping everyone focused and productive. ⚖️🎯",
-                "If competence were currency, you'd be a Bitcoin whale. 🐳💰",
-                "You're as reliable as a Linux server with 99.999% uptime. 🕰️✅",
-                "Your sense of humor is the best exception handler for a stressful day. 😂🛡️",
-                "You've got the vision of a CTO and the hands-on skills of a lead engineer. 👓🛠️",
-                "You're a full-stack human being: great on the backend (logic) and the frontend (people skills). 🧑‍💻❤️",
-                "Your problem-solving approach is more elegant than a recursive function with a perfect base case. 🔄👌",
-                "You're the 'git cherry-pick' of colleagues – the absolute best. 🍒🥇",
-                "Your terminal setup is so cool, it belongs in a cyberpunk movie. 🕶️📺",
-                "You automate tasks so well, I'm starting to think you're actually a highly advanced script. 📜🤖",
-                "Your understanding of CI/CD pipelines is smoother than a freshly deployed container. 🚢💨",
-                "You're the Kubernetes of people orchestrators—keeping everything running efficiently. ☸️🧑‍🤝‍🧑",
-                "Your grasp of asynchronous programming is beyond believable. You promise and deliver! 🤞📦",
-                "You're a master at turning coffee into code. A true alchemist. ☕➡️💻",
-                "Your knowledge of data structures is structural perfection. 🏗️🧱",
-                "You're the encryption key that keeps our team's secrets safe. 🔑🔒",
-                "Your ability to find the root cause is like having grep built into your brain. 🧠🔍",
-                "You're the CSS to our HTML; you make everything look good. 🎨💅",
-                "You're more invaluable than a pristine backup before a major migration. 💾🛡️",
-                "Your passion for tech is brighter than an RGB keyboard set to max brightness. 🌈⌨️",
-                "You're the satisfying 'click' of a mechanical keyboard in a quiet office. ⌨️😌",
-                "Your unit tests are so thorough, they should be used as a reference for others. 🧪✅",
-                "You're a beacon of knowledge in the sometimes foggy landscape of software development. 💡🌫️",
-                "Your ability to learn new frameworks is faster than `npm install`. 📦💨",
-                "You're the 'it just works' of people. Reliable and effortless. ✨✅",
-                "Your contributions to the codebase are like gold nuggets in a stream of silt. 🥇🏞️",
-                "You're a wizard with cloud infrastructure. You make scaling look like magic. 🧙‍♂️☁️",
-                "Your understanding of microservices is macro-impressive. 🔬🤯",
-                "You're the semicolon that makes everything run smoothly (and we'd be broken without you). ;✅",
-                "Your technical foresight is like having a time machine for tech trends. ⏳🚀",
-                "You're a true professional. Your work ethic is as solid as a rock-hard firewall. 🧱🔥",
-                "Your ability to abstract complexity is a gift to humanity. 🎁🤯",
-                "You're the ultimate debugger. You find the needle in the haystack, and then organize the hay. 🪡🌾",
-                "Your knowledge is deep, like a well-designed data lake. 🌊🗂️",
-                "You're a catalyst for innovation. Things just happen faster when you're around. 🧪🚀",
-                "Your perspective is as refreshing as clearing the browser cache. 🔄✨",
-                "You're a master of the command line. A true terminal warrior. ⚔️📺",
-                "Your ability to stay calm under pressure is lower-latency than a local host ping. 🧘‍♂️🏓",
-                "You're the reliable API endpoint we all love to query. 🔗❤️",
-                "Your ideas are as disruptive (in a good way!) as a new paradigm-shifting technology. 💥🚀",
-                "You're a joy to collaborate with. No merge conflicts here! 🤝✅",
-                "Your focus is sharper than a high-resolution retina display. 👁️🖥️",
-                "You're the human equivalent of a SSD – fast, reliable, and efficient. 💾⚡",
-                "Your strategic thinking is like a well-planned roadmap. 🗺️📍",
-                "You're a ray of sunshine in the server room. ☀️🖥️",
-                "Your positive attitude is the best framework for success. 🖼️✅",
-                "You're a master of efficiency. You probably have keyboard shortcuts for real life. ⌨️🏃",
-                "Your ability to connect the dots is like a graph database in action. 📉💡",
-                "You're a natural leader. People follow your commit history. 📜👣",
-                "Your insights are as valuable as a zero-day vulnerability patch. 🛡️💎",
-                "You're the ultimate team player. You always pass the ball (or the ticket). 🏀🎫",
-                "Your creativity is unbounded, like resources in the cloud (but way cheaper). ☁️🎨",
-                "Your analytical skills are sharper than a scalpel. ⚕️🧠",
-                "You're a true visionary. You see the future of tech before it's merged to main. 🔮🌿",
-                "Your ability to execute is as reliable as a cron job. 🕰️✅",
-                "You're the calm in the center of a deployment storm. 🌪️🧘‍♂️",
-                "Your intellectual curiosity is inspiring. You're always learning, always upgrading. 🧠⬆️",
-                "You're a master of communication. You bridge the gap between tech and non-tech perfectly. 🌉🗣️",
-                "Your dedication to quality is as unshakable as blockchain immutability. 🔗🧱",
-                "You're a true asset. Your value appreciates faster than a hot tech stock. 📈💰",
-                "Your intuition is better than any A/B test result. 🧠📊",
-                "You're a fountain of knowledge. A human Stack Overflow. ⛲📚",
-                "Your ability to adapt is faster than a hot-reload. 🔥🔄",
-                "You're the ultimate troubleshooter. You fix things before we even know they're broken. 🔧🔮",
-                "Your generosity with your knowledge is the best open-source contribution. 🤝📖",
-                "You're a rockstar developer. But without the ego and with better code. 🎸💻",
-                "Your ability to focus is like a dedicated GPU for your brain. 🧠🎮",
-                "You're a breath of fresh air in a stuffy meeting room. 🌬️🏢",
-                "Your innovative spirit is the engine that drives us forward. 🚗💨",
-                "You're a master of balance. You juggle tasks like an async event loop. 🤹‍♂️🔄",
-                "Your attention to detail is pixel-perfect. 🔍🖼️",
-                "You're the glue that holds the project together. A super-strong, tech-savvy adhesive. 🧴🔗",
-                "Your resilience is inspiring. You bounce back faster than a resilient pod in K8s. ☸️🤸",
-                "Your strategic vision is as clear as 4K resolution. 👓📺",
-                "You're a master of efficiency. You get things done in O(log n) time. 📉⚡",
-                "Your positive energy is like a fully charged battery pack for the team. 🔋⚡",
-                "You're the ultimate collaborator. You make pair programming a joy. 🍐💻",
-                "Your integrity is as unbreakable as strong encryption. 🔒💎",
-                "You're a true professional. You always deliver, like a reliable webhook. 🔗📦",
-                "Your sense of humor is a feature, not a bug. 😂🐛"
+            // 50 Unique, Family-Friendly Tech & General Jokes
+            const mockJokes = [
+                { setup: "Why do programmers prefer dark mode?", punchline: "Because light attracts bugs!" },
+                { setup: "How many programmers does it take to change a light bulb?", punchline: "None, that's a hardware problem." },
+                { setup: "Why did the database administrator leave his wife?", punchline: "She had one-to-many relationships." },
+                { setup: "What is a programmer's favorite hangout place?", punchline: "The Foo Bar." },
+                { setup: "Why did the developer go broke?", punchline: "Because he used up all his cache." },
+                { setup: "What do you call a spider that knows how to code?", punchline: "A web developer!" },
+                { setup: "Why do Java developers wear glasses?", punchline: "Because they don't C#." },
+                { setup: "Knock, knock. \nWho's there? \n...", punchline: "Java." }, // Long pause joke
+                { setup: "What's the best thing about boolean dreams?", punchline: "You're either 100% asleep or 100% awake." },
+                { setup: "Why did the programmer quit his job?", punchline: "Because he didn't get arrays." },
+                { setup: "A SQL query goes into a bar, walks up to two tables and asks...", punchline: "'Can I join you?'" },
+                { setup: "How do you comfort a JavaScript bug?", punchline: "You console it." },
+                { setup: "Why was the mobile phone wearing glasses?", punchline: "It lost its contacts." },
+                { setup: "What do computers eat for a snack?", punchline: "Microchips!" },
+                { setup: "Why did the computer show up at work late?", punchline: "It had a hard drive." },
+                { setup: "How does a computer catch a fish?", punchline: "With its internet!" },
+                { setup: "Why did the PowerPoint presentation cross the road?", punchline: "To get to the other slide." },
+                { setup: "What do you call an algorithm that feels lonely?", punchline: "A standalone process." },
+                { setup: "Why do programmers always mix up Halloween and Christmas?", punchline: "Because Oct 31 == Dec 25." },
+                { setup: "What is a network engineer's favorite type of jewelry?", punchline: "A token ring." },
+                { setup: "Why did the function cross the road?", punchline: "To return a value." },
+                { setup: "What do you call a computer that sings?", punchline: "A Dell." },
+                { setup: "Why are assembly programmers always soaking wet?", punchline: "They work below C-level." },
+                { setup: "Why did the cloud computing platform get in trouble?", punchline: "It was caught raining on the server." },
+                { setup: "What’s an alien’s favorite place on a computer?", punchline: "The space bar." },
+                { setup: "How did the hacker escape the police?", punchline: "He just ransomware!" },
+                { setup: "Why did the Wi-Fi go to therapy?", punchline: "It had a weak connection with its peers." },
+                { setup: "What do you tell a stressed-out CPU?", punchline: "Just process it." },
+                { setup: "Why was the keyboard so tired?", punchline: "Because it had two shifts!" },
+                { setup: "What did the router say to the doctor?", punchline: "It hurts when I ping." },
+                { setup: "Why did the HTML break up with the CSS?", punchline: "It had no class." },
+                { setup: "Why is it impossible to keep a secret on a network?", punchline: "Because there are too many packets sniffing around." },
+                { setup: "What is the most used language in programming?", punchline: "Profanity." },
+                { setup: "Why did the algorithm break up with the data structure?", punchline: "It just couldn't sort things out." },
+                { setup: "What's a computer's favorite beat?", punchline: "An algo-rhythm!" },
+                { setup: "How do developers propose?", punchline: "They use a git commit." },
+                { setup: "Why did the monitor go to the doctor?", punchline: "It had a terrible screen-ache." },
+                { setup: "What did the JavaScript developer say when he was sad?", punchline: "I don't know how to React." },
+                { setup: "Why don't bachelors like Git?", punchline: "Because they are afraid to commit." },
+                { setup: "What do you call 8 hobbits?", punchline: "A hobbyte." },
+                { setup: "Why did the server crash?", punchline: "Because it had a bad drive." },
+                { setup: "How does a techie make coffee?", punchline: "They brew it on a Java machine." },
+                { setup: "Why was the web developer always calm?", punchline: "Because he knew how to float." },
+                { setup: "What is a coder's favorite type of tree?", punchline: "A binary tree." },
+                { setup: "Why did the integer jump out the window?", punchline: "Because of a floating point error." },
+                { setup: "What did the motherboard say to the processor?", punchline: "You compute me." },
+                { setup: "Why did the software engineer go broke?", punchline: "He kept getting caught in a while loop." },
+                { setup: "How do you know your computer has a cold?", punchline: "It has a lot of windows open." },
+                { setup: "What did the array say to the loop?", punchline: "Stop iterating me!" },
+                { setup: "Why did the user cross the road?", punchline: "Because the UI told them to." }
             ];
 
-            form.addEventListener('submit', async (e) => {
-                e.preventDefault();
+            // 100 Unique, Quirky, and Funny Compliments
+            const mockCompliments = [
+                "You're like a successful Git merge: beautiful, seamless, and a huge relief.",
+                "If you were a web browser, you'd be Chrome, because you consume all my memory.",
+                "You're the semicolon to my code. Without you, everything falls apart.",
+                "You're so cool, your CPU fan must be running at 0 RPM.",
+                "Your smile is brighter than my monitor on light mode.",
+                "I'd never `rm -rf` you from my heart.",
+                "You're the CSS to my HTML—without you, I'm just a boring, unstyled mess.",
+                "Are you an exception? Because I'd love to catch you.",
+                "You must be a keyboard, because you're exactly my type.",
+                "If you were a bug, I'd never patch you.",
+                "You're the `sudo` command of my life—you make everything happen.",
+                "You've got the logic of a senior dev and the heart of a junior who just fixed their first bug.",
+                "If brains were RAM, you'd be rocking 128GB of DDR5.",
+                "You're like a properly indented Python script: elegant and flawless.",
+                "Are you a router? Because I feel a strong connection.",
+                "I'd rate your vibe a solid 200 OK.",
+                "You're the only ping I want to reply to.",
+                "You must be a variable, because my life changes when you're around.",
+                "You're the 1 to my 0. Together, we make perfect binary.",
+                "Even my linter can't find anything wrong with you.",
+                "Your sense of humor is like a well-timed Easter egg—unexpected and brilliant.",
+                "You're like an SSD: fast, reliable, and way better than what I had before.",
+                "I bet you have a flawless 100% Lighthouse score.",
+                "You make my heart beat at 144Hz.",
+                "If you were an API, I'd query you all day.",
+                "You're the missing dependency I've been searching for.",
+                "You're more satisfying than an empty inbox.",
+                "You must be made of React, because you just changed my state.",
+                "Are you a search algorithm? Because you're exactly what I've been looking for.",
+                "You're so sharp, you could slice through O(n^2) complexity.",
+                "You're the ultimate hot-reload—you make everything better instantly.",
+                "If you were a cloud provider, you'd be Azure, because you're sky-high amazing.",
+                "You have the kind of energy that makes me want to write documentation.",
+                "Your code is so clean, I could eat off it.",
+                "You're like an ad-blocker: you make the world a much better place.",
+                "You must be a compiler, because you turn my gibberish into something beautiful.",
+                "I trust you more than I trust code that runs perfectly on the first try.",
+                "You're the dark mode of people: easy on the eyes and universally loved.",
+                "You are the root access to my happiness.",
+                "I would pause my favorite video game just to talk to you.",
+                "You're the only person I'd share my Wi-Fi password with.",
+                "If you were an app, you'd have zero one-star reviews.",
+                "You're like an automated backup: a true lifesaver.",
+                "You make me want to be a better programmer.",
+                "You're so fly, you make airplane mode jealous.",
+                "You're the upgrade my OS has been waiting for.",
+                "You're like a high-end GPU: totally stunning and rendering everything perfectly.",
+                "Are you a firewall? Because you're protecting my good vibes.",
+                "You're the MVP of my MVP (Minimum Viable Product).",
+                "You're so bright, you probably invented the light-emitting diode.",
+                "If you were a string, you'd be formatted to perfection.",
+                "You're the magic bullet that resolves all my merge conflicts.",
+                "You make the impossible look like a simple `npm install`.",
+                "You're like a zero-day exploit, but for my heart.",
+                "Are you an overclocked processor? Because you are smoking hot.",
+                "You're the 'Hello World' that started it all.",
+                "You've got the precision of a floating-point number.",
+                "If you were a data structure, you'd be a hash table, because you're incredibly fast at finding joy.",
+                "You're the perfect commit message: descriptive, thoughtful, and to the point.",
+                "You make my problems feel like 404s—they just disappear.",
+                "You're like a syntax highlighter: you make everything make sense.",
+                "I'd never put you in a `.gitignore` file.",
+                "You're the only bug I don't want to fix.",
+                "You're as reliable as a mechanical keyboard switch.",
+                "You're the auto-complete to my sentences.",
+                "If you were a Docker container, I'd deploy you everywhere.",
+                "You've got more layers of awesome than an OSI model.",
+                "You're the cache hit to my daily queries.",
+                "You're a rare breed: a developer who actually likes writing tests.",
+                "You're like a mechanical keyboard: loud, clicky, and I absolutely love you.",
+                "You're the ultimate Easter egg in the software of life.",
+                "Your vibes are strictly strictly-typed.",
+                "You make my 500 Internal Server Error turn into a 200 OK.",
+                "You're like an open-source project—everyone loves you.",
+                "You're the perfect blend of logic and creativity, like an SVG.",
+                "You could make a floppy disk feel like a terabyte SSD.",
+                "Are you a while loop? Because I could see myself with you forever.",
+                "You're so brilliant, I need sunglasses to read your source code.",
+                "You're the 'Command + Z' to all my mistakes.",
+                "If you were a font, you'd be Comic Sans, because you're fun and everyone secretly loves you.",
+                "You're the only person I wouldn't mute in a Zoom call.",
+                "You're so awesome, you break my regex patterns.",
+                "You're the perfect polyfill for the missing pieces in my life.",
+                "You're like a beautifully crafted SQL query: you always get exactly what's needed.",
+                "You make me happier than a successful production deployment on a Friday.",
+                "You're the only notification I don't swipe away.",
+                "You're like an infinite scroll of positive energy.",
+                "Your brain works in O(1) time.",
+                "If you were a color, you'd be #FFD700 because you are pure gold.",
+                "You're the master branch of my life.",
+                "You're so cool, you could chill a server farm.",
+                "You make my heartbeat sync up with your API.",
+                "You're the only parameter I need in my function.",
+                "Are you a Bluetooth device? Because we are definitely paired.",
+                "You're the absolute path to my happiness.",
+                "You make me feel like I have administrative privileges.",
+                "You're the highest-resolution person I know.",
+                "You're like a perfect responsive design: you look great on every device.",
+                "You're the patch note I always look forward to reading.",
+                "You're so amazing, even an AI couldn't generate a compliment good enough for you."
+            ];
+
+            // Prevent default form submission
+            form.addEventListener('submit', (e) => e.preventDefault());
+
+            // Bind Actions to Buttons
+            btnCompliment.addEventListener('click', () => processAction('compliment'));
+            btnJoke.addEventListener('click', () => processAction('joke'));
+
+            function updateCardDecor() {
+                // Select ONE random color and ONE random icon to be shared across both circles
+                const sharedColor = cardColors[Math.floor(Math.random() * cardColors.length)];
+                const sharedIcon = cardIcons[Math.floor(Math.random() * cardIcons.length)];
                 
-                // 1. Capture Inputs
-                const payload = {
-                    tone: document.getElementById('tone').value,
-                    topic: document.getElementById('topic').value,
-                    focus_area: document.getElementById('focus_area').value || "holistic integration"
-                };
-
-                // 2. Update System State (UI & 3D)
-                updateUIState('LOADING');
+                circleTR.style.backgroundColor = sharedColor;
+                circleTR.style.borderColor = "#1E293B"; // Ensure contrast
+                circleTR.textContent = sharedIcon;
                 
-                try {
-                    // 3. Dispatch Network Request (Fetch API)
-                    const response = await fetch(API_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
+                circleBL.style.backgroundColor = sharedColor;
+                circleBL.style.borderColor = "#1E293B"; // Ensure contrast
+                circleBL.textContent = sharedIcon;
+                
+                return sharedColor; // Return to pass to 3D core
+            }
 
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            function setButtonLoading(button, isLoading) {
+                const span = button.querySelector('span');
+                const loader = button.querySelector('.loader');
+                
+                // Disable BOTH buttons during any action
+                btnCompliment.disabled = isLoading;
+                btnJoke.disabled = isLoading;
 
-                    const data = await response.json();
-                    
-                    // 4. Handle Success Response
-                    handlePayloadReceived(data.compliment, true);
-
-                } catch (error) {
-                    console.warn("Backend connection failed. Sandbox fallback initiated.");
-                    
-                    // Fallback execution for sandboxed environments (portfolio viewing)
-                    setTimeout(() => {
-                        // Select a random compliment from the 100 unique options
-                        const randomIndex = Math.floor(Math.random() * mockCompliments.length);
-                        let mockCompliment = mockCompliments[randomIndex];
-
-                        // Personalize it slightly with the user's topic if it's not already a generic one
-                        // (Most are generic to be funny/applicable, but we can prefix the topic for some flavor)
-                        if (!mockCompliment.includes(payload.topic)) {
-                             mockCompliment = `[Topic: ${payload.topic}] ${mockCompliment}`;
-                        }
-
-                        handlePayloadReceived(mockCompliment, false);
-                    }, 1800); // Simulate network latency
-                }
-            });
-
-            function updateUIState(state) {
-                if (state === 'LOADING') {
-                    submitBtn.disabled = true;
-                    btnText.style.display = 'none';
+                if (isLoading) {
+                    span.style.display = 'none';
                     loader.style.display = 'block';
-                    
-                    resultContainer.classList.remove('success-pulse'); // Remove pulse if it exists
-                    resultText.innerHTML = '';
-                    resultText.classList.remove('placeholder-text');
-                    
-                    stateBadge.textContent = "SYS: HTTP POST INFLIGHT";
-                    stateBadge.style.color = "#F59E0B"; // Amber
-                    stateBadge.style.borderColor = "rgba(245, 158, 11, 0.3)";
-                    
-                    Visualizer3D.setProcessing();
-                } 
-                else if (state === 'SUCCESS') {
-                    submitBtn.disabled = false;
-                    btnText.style.display = 'block';
-                    loader.style.display = 'none';
-                }
-            }
-
-            function handlePayloadReceived(text, isLive) {
-                updateUIState('SUCCESS');
-                
-                // Add pulse animation for visual interest
-                resultContainer.classList.add('success-pulse');
-
-                // Update system badge based on connection type
-                if (isLive) {
-                    stateBadge.textContent = "SYS: WEBHOOK DISPATCHED / 200 OK";
-                    stateBadge.style.color = "#14B8A6"; // Teal
-                    stateBadge.style.borderColor = "rgba(20, 184, 166, 0.3)";
                 } else {
-                    stateBadge.textContent = "SYS: MOCK PAYLOAD / FALLBACK OK";
-                    stateBadge.style.color = "#8B5CF6"; // Purple
-                    stateBadge.style.borderColor = "rgba(139, 92, 246, 0.3)";
+                    btnCompliment.querySelector('span').style.display = 'block';
+                    btnCompliment.querySelector('.loader').style.display = 'none';
+                    btnJoke.querySelector('span').style.display = 'block';
+                    btnJoke.querySelector('.loader').style.display = 'none';
                 }
-                
-                // Trigger 3D unpacking animation
-                Visualizer3D.setRevealing();
-
-                // Format text for terminal output
-                const formattedText = `> [SYSTEM] Payload successfully decrypted.\n> [TIMESTAMP] ${new Date().toISOString()}\n\n${text}`;
-
-                // Render text with a technical terminal typing effect
-                typeWriterEffect(formattedText, resultText, 20);
             }
 
-            function typeWriterEffect(text, element, speed = 25) {
-                element.innerHTML = '';
-                element.classList.add('cursor-blink'); // Ensure cursor is active during typing
+            function processAction(type) {
+                const button = type === 'compliment' ? btnCompliment : btnJoke;
+                setButtonLoading(button, true);
+                
+                Visualizer3D.setProcessing();
+                textContent.innerHTML = '';
+                textContent.classList.remove('placeholder-text');
+
+                // Simulate network/processing delay
+                setTimeout(() => {
+                    const activeColor = updateCardDecor();
+                    Visualizer3D.setRevealing(activeColor);
+                    setButtonLoading(button, false);
+
+                    if (type === 'compliment') {
+                        const comp = mockCompliments[Math.floor(Math.random() * mockCompliments.length)];
+                        typeWriterEffect(`[SYS: COMPLIMENT]\n\n${comp}`);
+                    } else if (type === 'joke') {
+                        const joke = mockJokes[Math.floor(Math.random() * mockJokes.length)];
+                        renderJoke(joke);
+                    }
+                }, 1500);
+            }
+
+            function renderJoke(jokeObj) {
+                textContent.innerHTML = '';
+                
+                // Type Setup
+                let setupEl = document.createElement('div');
+                textContent.appendChild(setupEl);
+                
+                // Type Punchline Container (hidden initially)
+                let punchlineEl = document.createElement('div');
+                punchlineEl.className = 'punchline-text';
+                punchlineEl.textContent = jokeObj.punchline;
+                textContent.appendChild(punchlineEl);
+
+                // Start Typing
                 let i = 0;
-                
-                // Auto-scroll to bottom as it types
-                const scrollContainer = document.querySelector('.result-scroll-area');
-                
+                function typeSetup() {
+                    if (i < jokeObj.setup.length) {
+                        setupEl.innerHTML += jokeObj.setup.charAt(i);
+                        i++;
+                        setTimeout(typeSetup, 30);
+                    } else {
+                        // Setup complete. Wait, then reveal punchline.
+                        setTimeout(() => {
+                            punchlineEl.classList.add('punchline-visible');
+                        }, 1200); // 1.2 second dramatic pause
+                    }
+                }
+                typeSetup();
+            }
+
+            function typeWriterEffect(text, speed = 30) {
+                textContent.innerHTML = '';
+                let i = 0;
                 function type() {
                     if (i < text.length) {
-                        element.innerHTML += text.charAt(i);
+                        if (text.charAt(i) === '\n') {
+                            textContent.innerHTML += '<br>';
+                        } else {
+                            textContent.innerHTML += text.charAt(i);
+                        }
                         i++;
-                        if (scrollContainer) scrollContainer.scrollTop = scrollContainer.scrollHeight;
                         setTimeout(type, speed);
                     }
                 }
