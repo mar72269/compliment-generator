@@ -32,10 +32,7 @@
         }
 
         body {
-            /* Animated Gradient Background for Visual Interest */
-            background: linear-gradient(-45deg, #0F172A, #1E1B4B, #064E3B, #0F172A);
-            background-size: 400% 400%;
-            animation: gradientBG 20s ease infinite;
+            background-color: #0F172A; /* Deep Slate Base */
             color: var(--text-primary);
             font-family: var(--font-standard);
             line-height: 1.6;
@@ -48,21 +45,26 @@
             position: relative;
         }
 
-        @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+        /* The Canvas Network Background */
+        #bg-network {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none; /* Let clicks pass through to the UI */
         }
 
-        /* Subtle Grid Overlay */
+        /* Subtle Grid Overlay for added texture */
         body::before {
             content: '';
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
             background-image: 
-                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-            background-size: 30px 30px;
+                linear-gradient(rgba(20, 184, 166, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(20, 184, 166, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
             pointer-events: none;
             z-index: 0;
         }
@@ -325,6 +327,9 @@
 </head>
 <body>
 
+    <!-- Dynamic Canvas Background -->
+    <canvas id="bg-network"></canvas>
+
     <div class="app-container">
         
         <!-- LEFT: Control Panel -->
@@ -540,6 +545,85 @@
     </script>
 
     <script>
+        /**
+         * MODULE: NetworkBackground
+         * Architectural Note: A lightweight 2D canvas particle system to render 
+         * interactive "data nodes" to enhance the AI/Tech aesthetic.
+         */
+        const NetworkBackground = (function() {
+            let canvas, ctx;
+            let particles = [];
+            const particleCount = 75; // Number of floating nodes
+            const connectionDistance = 150; // Distance at which nodes connect
+
+            function init() {
+                canvas = document.getElementById('bg-network');
+                ctx = canvas.getContext('2d');
+                resize();
+                window.addEventListener('resize', resize);
+                
+                // Initialize particles
+                for (let i = 0; i < particleCount; i++) {
+                    particles.push({
+                        x: Math.random() * canvas.width,
+                        y: Math.random() * canvas.height,
+                        vx: (Math.random() - 0.5) * 0.6, // Velocity X
+                        vy: (Math.random() - 0.5) * 0.6, // Velocity Y
+                        radius: Math.random() * 1.5 + 0.5
+                    });
+                }
+                animate();
+            }
+
+            function resize() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+
+            function animate() {
+                requestAnimationFrame(animate);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Update and draw particles
+                particles.forEach((p, i) => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    
+                    // Bounce off screen edges
+                    if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+                    if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+                    
+                    // Draw node
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(20, 184, 166, 0.6)'; // Teal nodes
+                    ctx.fill();
+                    
+                    // Draw connections between nearby nodes
+                    for (let j = i + 1; j < particles.length; j++) {
+                        const p2 = particles[j];
+                        const dx = p.x - p2.x;
+                        const dy = p.y - p2.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (dist < connectionDistance) {
+                            ctx.beginPath();
+                            ctx.moveTo(p.x, p.y);
+                            ctx.lineTo(p2.x, p2.y);
+                            // Opacity fades as nodes get further apart
+                            const opacity = 1 - (dist / connectionDistance);
+                            ctx.strokeStyle = `rgba(139, 92, 246, ${opacity * 0.3})`; // Purple connecting lines
+                            ctx.stroke();
+                        }
+                    }
+                });
+            }
+            return { init };
+        })();
+
+        // Start background animation
+        window.addEventListener('load', NetworkBackground.init);
+
         document.addEventListener('DOMContentLoaded', () => {
             const form = document.getElementById('engine-form');
             const btnCompliment = document.getElementById('btn-compliment');
